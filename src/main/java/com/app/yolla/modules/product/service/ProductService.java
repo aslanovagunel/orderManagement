@@ -14,6 +14,7 @@ import com.app.yolla.modules.product.dto.ProductUpdateRequest;
 import com.app.yolla.modules.product.entity.Product;
 import com.app.yolla.modules.product.repository.ProductRepository;
 import com.app.yolla.modules.user.dto.UserDTO;
+import com.app.yolla.modules.user.entity.UserRole;
 import com.app.yolla.modules.user.service.UserService;
 import com.app.yolla.shared.exception.MyException;
 
@@ -36,7 +37,9 @@ public class ProductService {
 	public ProductDTO createdProduct(@Valid ProductAddRequest req) {
 		String phone = (String) userService.findPhone();
 		UserDTO en = userService.findByPhoneNumber(phone);
-
+		if (!en.getRole().equals(UserRole.ADMIN)) {
+			throw new MyException("Bu əməliyyatı yalnız ADMIN rolu olan istifadəçilər yerinə yetirə bilər.");
+		}
 		Product product = new Product();
 		mapper.map(req, product);
 		product.setCreatedAt(LocalDateTime.now());

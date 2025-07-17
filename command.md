@@ -2,7 +2,7 @@
 Əgər Docker Desktop aktiv deyilsə, digər əmrlər işləməyəcək.
 
 2. Layihəni işə salmaq
-docker compose up --build
+docker compose up --build -d
 
 3. Servisləri dayandırmaq
 docker compose down

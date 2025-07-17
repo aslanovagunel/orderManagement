@@ -1,8 +1,8 @@
 # Multi-stage build üçün Dockerfile
 # Bu faylı layihənin root qovluğuna qoyun
 
-# Build stage
-FROM openjdk:17-jdk-alpine AS builder
+# Build stage - ARM64 uyğun image istifadə edin
+FROM amazoncorretto:17-alpine AS builder
 
 # Metadata
 LABEL maintainer="Order Management System Team"
@@ -28,8 +28,8 @@ RUN chmod +x ./gradlew
 # Dependencies yüklə və build et
 RUN ./gradlew build -x test --no-daemon
 
-# Runtime stage
-FROM openjdk:17-alpine AS runtime
+# Runtime stage - ARM64 uyğun image istifadə edin
+FROM amazoncorretto:17-alpine AS runtime
 
 # Metadata
 LABEL version="1.0.0"

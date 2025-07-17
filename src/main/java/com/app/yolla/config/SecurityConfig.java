@@ -97,7 +97,8 @@ public class SecurityConfig {
      * Bu metod hansı URL-lərin açıq, hansılarının qorumalı olduğunu müəyyən edir
      */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain filterChain(HttpSecurity http)
+			throws Exception {
         http
 
                 // CSRF-ni söndür (REST API üçün lazım deyil)
@@ -112,12 +113,25 @@ public class SecurityConfig {
 
                 // Authentication exception handler
                 .exceptionHandling(exception ->
-                        exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+				exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
 
                 // URL icazələri - şimdilik hamısını açıq buraxaq
                 .authorizeHttpRequests(authz -> authz
                         // Bütün URL-ləri açıq burax (development üçün)
-						.anyRequest().permitAll())
+                		.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers(
+                            "/auth/**",
+                            "/auth/v2/**",
+                            "/api/v1/auth/**",
+                            "/health/**",
+                            "/actuator/**",
+                            "/swagger-ui/**",
+                            "/v3/api-docs/**",
+                            "/api/v1/h2-console/**",
+                            "/",
+                            "/favicon.ico"
+                        ).permitAll()
+						.anyRequest().authenticated())
 				.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         // JWT filter əlavə et

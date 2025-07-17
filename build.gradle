@@ -48,6 +48,8 @@ dependencies {
 	implementation 'jakarta.el:jakarta.el-api:5.0.1'
 	implementation 'org.glassfish:jakarta.el:5.0.0-M1'
 
+
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
 	// Database
 	
 	// H2 database development və test üçün
