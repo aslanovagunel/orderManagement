@@ -1,17 +1,15 @@
-package com.app.yolla.modules.product.entity;
+package com.app.yolla.modules.market.entity;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -20,13 +18,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 
 @Entity
-@Table(name = "products")
-public class Product {
-	
+@Table(name = "markets")
+@EntityListeners(AuditingEntityListener.class)
+public class Market {
+
 	@Id
 	@GeneratedValue(generator = "uuid2")
 	@GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
@@ -36,25 +35,6 @@ public class Product {
 
 	private String name;
 
-	private String description;
-
-	private BigDecimal price;
-
-	private Integer stockQuantity;
-
-	private Boolean active;
-
-	@CreatedDate
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
-
-	@LastModifiedDate
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
-
-	@Column(name = "user_id", columnDefinition = "VARCHAR(36)", nullable = false)
-	@JdbcTypeCode(SqlTypes.CHAR)
-	private UUID userId;
-
+	private String address;
 
 }

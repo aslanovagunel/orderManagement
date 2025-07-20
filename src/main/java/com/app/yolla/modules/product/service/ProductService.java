@@ -6,15 +6,17 @@ import java.util.UUID;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.app.yolla.modules.order.repository.OrderItemRepository;
 import com.app.yolla.modules.product.dto.ProductAddRequest;
 import com.app.yolla.modules.product.dto.ProductDTO;
 import com.app.yolla.modules.product.dto.ProductUpdateRequest;
 import com.app.yolla.modules.product.entity.Product;
 import com.app.yolla.modules.product.repository.ProductRepository;
 import com.app.yolla.modules.user.dto.UserDTO;
-import com.app.yolla.modules.user.entity.UserRole;
 import com.app.yolla.modules.user.service.UserService;
 import com.app.yolla.shared.exception.MyException;
 
@@ -33,18 +35,24 @@ public class ProductService {
 
 	@Autowired
 	private UserService userService;
+	
+	@Autowired
+	private OrderItemRepository orderItemRepository;
 
 	public ProductDTO createdProduct(@Valid ProductAddRequest req) {
-		String phone = (String) userService.findPhone();
-		UserDTO en = userService.findByPhoneNumber(phone);
-		if (!en.getRole().equals(UserRole.ADMIN)) {
-			throw new MyException("Bu əməliyyatı yalnız ADMIN rolu olan istifadəçilər yerinə yetirə bilər.");
-		}
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		String phoneNumber = authentication.getName();
+		UserDTO en = userService.findByPhoneNumber(phoneNumber);
+
 		Product product = new Product();
-		mapper.map(req, product);
+
+		product.setName(req.getName());
+		product.setDescription(req.getDescription());
+		product.setPrice(req.getPrice());
+		product.setStockQuantity(req.getStockQuantity());
 		product.setCreatedAt(LocalDateTime.now());
-		product.setUserId(en.getId());
 		product.setActive(true);
+		product.setUserId(en.getId());
 		repository.save(product);
 
 		return convertToDTO(product);
@@ -91,6 +99,7 @@ public class ProductService {
 
 	public void deleteById(UUID id) {
 		Product p = findProduct(id);
+		orderItemRepository.deleteByProductId(id);
 		repository.deleteById(id);
 	}
 

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.app.yolla.modules.market.dto.MarketDTO;
+import com.app.yolla.modules.market.entity.Market;
+import com.app.yolla.modules.market.service.MarketService;
 import com.app.yolla.modules.user.dto.UserCreateRequest;
 import com.app.yolla.modules.user.dto.UserDTO;
 import com.app.yolla.modules.user.dto.UserUpdateRequest;
@@ -22,6 +26,7 @@ import com.app.yolla.modules.user.entity.User;
 import com.app.yolla.modules.user.entity.UserRole;
 import com.app.yolla.modules.user.repository.UserRepository;
 import com.app.yolla.shared.exception.DuplicateResourceException;
+import com.app.yolla.shared.exception.MyException;
 import com.app.yolla.shared.exception.ResourceNotFoundException;
 
 /**
@@ -41,6 +46,12 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+	private MarketService marketService;
+
+	@Autowired
+	private ModelMapper mapper;
 
     /**
      * Telefon nömrəsi ilə istifadəçi tapır
@@ -82,6 +93,18 @@ public class UserService {
 		user.setEmail(request.getEmail());
         user.setRole(request.getRole());
         user.setIsActive(true);
+
+		if (request.getRole().equals(UserRole.PREPARER)) {
+			if ((request.getMarketName() == null || request.getMarketName().isBlank())
+					&& (request.getAddress() == null || request.getAddress().isBlank())) {
+				throw new MyException("Prepared istifadəçi üçün market adı və ünvanı mütləqdir");
+			}
+			MarketDTO byName = marketService.findByNameAndAddress(request.getMarketName(), request.getAddress());
+			Market market = new Market();
+			mapper.map(byName, market);
+			marketService.saveMarket(market);
+			user.setMarket(market);
+		}
 
         // Verilənlər bazasına saxla
         User savedUser = userRepository.save(user);
@@ -243,6 +266,12 @@ public class UserService {
      * Entity-ni DTO-ya çevirmək üçün helper metod
      */
     private UserDTO convertToDTO(User user) {
+		MarketDTO marketDTO = null;
+
+		if (user.getMarket() != null) {
+			marketDTO = marketService.convertToDTO(user.getMarket());
+		}
+
         return new UserDTO(
                 user.getId(),
                 user.getPhoneNumber(),
@@ -251,7 +280,7 @@ public class UserService {
                 user.getRole(),
                 user.getIsActive(),
                 user.getCreatedAt(),
-                user.getUpdatedAt()
+				user.getUpdatedAt(), marketDTO
         );
     }
 

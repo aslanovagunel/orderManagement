@@ -11,6 +11,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.app.yolla.modules.market.entity.Market;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -18,6 +20,8 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -104,6 +108,9 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+	@ManyToOne(optional = true) // optional, çünki alıcının marketi olmaya bilər
+	@JoinColumn(name = "market_id")
+	private Market market;
     // Konstruktorlar
 
 

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.app.yolla.modules.market.dto.MarketDTO;
 import com.app.yolla.modules.order.entity.OrderStatus;
 
 import lombok.AllArgsConstructor;
@@ -36,4 +37,6 @@ public class OrderDTO {
 	private List<OrderItemDTO> items;
 
 	private LocalDateTime deliveryTime;
+
+	private MarketDTO market;
 }

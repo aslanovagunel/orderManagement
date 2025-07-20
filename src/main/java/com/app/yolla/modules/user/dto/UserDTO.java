@@ -3,6 +3,7 @@ package com.app.yolla.modules.user.dto;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.app.yolla.modules.market.dto.MarketDTO;
 import com.app.yolla.modules.user.entity.UserRole;
 
 import jakarta.validation.constraints.Email;
@@ -38,6 +39,7 @@ public class UserDTO {
     private Boolean isActive;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
+	private MarketDTO market;
 
     // Default konstruktor
     public UserDTO() {
@@ -46,7 +48,7 @@ public class UserDTO {
     // Tam konstruktor
 	public UserDTO(UUID id, String phoneNumber, String fullName, String email,
                    UserRole role, Boolean isActive, LocalDateTime createdAt,
-                   LocalDateTime updatedAt) {
+			LocalDateTime updatedAt, MarketDTO market) {
         this.id = id;
         this.phoneNumber = phoneNumber;
         this.fullName = fullName;
@@ -55,6 +57,7 @@ public class UserDTO {
         this.isActive = isActive;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+		this.market = market;
     }
 
     // Əsas məlumatlarla konstruktor (qeydiyyat üçün)
@@ -73,6 +76,14 @@ public class UserDTO {
 	public void setId(UUID id) {
         this.id = id;
     }
+
+	public MarketDTO getMarket() {
+		return market;
+	}
+
+	public void setMarket(MarketDTO market) {
+		this.market = market;
+	}
 
     public String getPhoneNumber() {
         return phoneNumber;

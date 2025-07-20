@@ -1,6 +1,7 @@
 package com.app.yolla.modules.order.dto;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.app.yolla.modules.order.entity.OrderStatus;
 
@@ -30,4 +31,7 @@ public class OrderCreateRequest {
 
 	@NotEmpty(message = "Sifariş maddələri boş ola bilməz")
 	private List<OrderItemRequest> items;
+
+	@NotNull(message = "Market ID boş ola bilməz")
+	private UUID marketId;
 }

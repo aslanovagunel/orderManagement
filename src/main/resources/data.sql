@@ -10,8 +10,10 @@
 --);
 --
 
+INSERT INTO markets (id, name,address) VALUES ('b5f20a68-7a4d-4e76-9d3e-81d6e7e8a12a', 'System Market','Yasamal');
+
 INSERT INTO users (
-  id, phone_number, full_name, email, role, is_active, created_at, updated_at
+  id, phone_number, full_name, email, role, is_active, created_at, updated_at,market_id
 ) VALUES (
   UUID(),
   CONCAT('+99455', FLOOR(1000000 + RAND()*8999999)),
@@ -20,5 +22,6 @@ INSERT INTO users (
   'ADMIN',
   TRUE,
   '2025-06-06',
-  '2025-06-03'
+  '2025-06-03',
+  'b5f20a68-7a4d-4e76-9d3e-81d6e7e8a12a'
 );

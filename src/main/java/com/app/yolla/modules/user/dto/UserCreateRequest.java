@@ -1,10 +1,12 @@
 package com.app.yolla.modules.user.dto;
 
 import com.app.yolla.modules.user.entity.UserRole;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
 
 /**
  * İstifadəçi Yaratma Request DTO
@@ -15,6 +17,7 @@ import jakarta.validation.constraints.Size;
  * Analogi: Bu sinif bir "qeydiyyat formu" kimidir - istifadəçinin
  * doldurmalı olduğu sahələri göstərir.
  */
+@Data
 public class UserCreateRequest {
 
     @NotBlank(message = "Telefon nömrəsi mütləqdir")
@@ -29,7 +32,8 @@ public class UserCreateRequest {
     private String email;
 
     private UserRole role = UserRole.CUSTOMER; // Default olaraq müştəri
-
+	private String marketName;
+	private String address;
     // Default konstruktor
     public UserCreateRequest() {
     }

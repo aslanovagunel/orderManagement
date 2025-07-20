@@ -11,6 +11,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.app.yolla.modules.market.entity.Market;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,6 +21,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -40,6 +43,8 @@ public class Order {
 	@JdbcTypeCode(SqlTypes.CHAR)
 	private UUID id;
 
+	@Column(name = "user_id", columnDefinition = "VARCHAR(36)", nullable = false)
+	@JdbcTypeCode(SqlTypes.CHAR)
 	private UUID userId;
 
 	@Enumerated(EnumType.STRING)
@@ -61,6 +66,9 @@ public class Order {
 	private List<OrderItem> items;
 
 	private LocalDateTime deliveryTime;
+
+	@ManyToOne
+	private Market market;
 
 
 }

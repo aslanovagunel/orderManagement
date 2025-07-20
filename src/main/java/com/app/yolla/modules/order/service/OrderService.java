@@ -6,11 +6,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.app.yolla.modules.market.dto.MarketDTO;
+import com.app.yolla.modules.market.entity.Market;
+import com.app.yolla.modules.market.service.MarketService;
 import com.app.yolla.modules.order.dto.OrderCreateRequest;
 import com.app.yolla.modules.order.dto.OrderDTO;
 import com.app.yolla.modules.order.dto.OrderItemDTO;
@@ -47,13 +57,18 @@ public class OrderService {
 	@Autowired
 	private ProductService productService;
 
+	@Autowired
+	private MarketService marketService;
+
 	public OrderDTO createdOrder(OrderCreateRequest request) {
 		String phone = (String) userService.findPhone();
 		UserDTO byPhoneNumber = userService.findByPhoneNumber(phone);
 
 		Order order = new Order();
 		mapper.map(request, order);
+		Market market = marketService.findByMarket(request.getMarketId());
 		order.setCreatedAt(LocalDateTime.now());
+		order.setMarket(market);
 		order.setUserId(byPhoneNumber.getId());
 		
 
@@ -100,6 +115,9 @@ public class OrderService {
 			dto.setUnitPrice(o.getProduct().getPrice());
 			itemDTOs.add(dto);
 		}
+		MarketDTO dto1 = new MarketDTO();
+		Market market = order.getMarket();
+		mapper.map(market, dto1);
 		
 		UserDTO op = userService.findById(order.getUserId());
 		OrderDTO dto = new OrderDTO();
@@ -114,22 +132,22 @@ public class OrderService {
 		dto.setDeliveryAddress(order.getDeliveryAddress());
 		dto.setItems(itemDTOs);
 		dto.setDeliveryTime(order.getDeliveryTime());
+		dto.setMarket(dto1);
 
 		return dto;
 	}
 
 	public OrderResponse getAll(Integer begin, Integer length) {
-		String phone = (String) userService.findPhone();
-		UserDTO en = userService.findByPhoneNumber(phone);
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		String phoneNumber = authentication.getName();
+		UserDTO en = userService.findByPhoneNumber(phoneNumber);
+
+		Pageable pageable = PageRequest.of(begin / length, length, Sort.by("createdAt").descending());
+		Page<Order> page = repository.getAll(en.getId(), pageable);
+
+		List<OrderDTO> list = page.stream().map(this::convertToDTO).collect(Collectors.toList());
 
 		OrderResponse response = new OrderResponse();
-		List<Order> all = repository.getAll(en.getId(), begin, length);
-		List<OrderDTO> list = new ArrayList<OrderDTO>();
-
-		for (Order order : all) {
-			OrderDTO convertToDTO = convertToDTO(order);
-			list.add(convertToDTO);
-		}
 		response.setList(list);
 		return response;
 	}
@@ -255,7 +273,6 @@ public class OrderService {
 		if (order.getStatus() != OrderStatus.PENDING) {
 			throw new MyException("Yalnız PENDING statusundakı sifariş təsdiqlənə bilər");
 		}
-
 		order.setStatus(OrderStatus.CONFIRMED);
 		repository.save(order);
 
@@ -264,11 +281,11 @@ public class OrderService {
 
 	public OrderDTO shipOrder(UUID orderId, String currentUserPhone) {
 		Order order = findByOrder(orderId);
-
 		UserDTO currentUser = userService.findByPhoneNumber(currentUserPhone);
 
-		boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
-		boolean isPreparer = currentUser.getRole() == UserRole.PREPARER;
+		UserRole role = currentUser.getRole();
+		boolean isAdmin = role.equals(UserRole.ADMIN);
+		boolean isPreparer = role.equals(UserRole.PREPARER);
 
 		if (!isAdmin && !isPreparer) {
 			throw new MyException("Bu əməliyyatı icra etmək üçün icazəniz yoxdur");
@@ -278,8 +295,14 @@ public class OrderService {
 			throw new MyException("Yalnız CONFIRMED statusundakı sifariş göndərilə bilər");
 		}
 
-		order.setStatus(OrderStatus.SHIPPED);
+		if (isPreparer) {
+			if (currentUser.getMarket() == null || order.getMarket() == null
+					|| !order.getMarket().getId().equals(currentUser.getMarket().getId())) {
+				throw new MyException("Bu sifariş sizin marketə aid deyil.");
+			}
+		}
 
+		order.setStatus(OrderStatus.SHIPPED);
 		repository.save(order);
 
 		return convertToDTO(order);
@@ -290,8 +313,9 @@ public class OrderService {
 
 		UserDTO currentUser = userService.findByPhoneNumber(currentUserPhone);
 
-		boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
-		boolean isPreparer = currentUser.getRole() == UserRole.PREPARER;
+		UserRole role = currentUser.getRole();
+		boolean isAdmin = role.equals(UserRole.ADMIN);
+		boolean isPreparer = role.equals(UserRole.PREPARER);
 
 		if (!isAdmin && !isPreparer) {
 			throw new MyException("Bu əməliyyatı icra etmək üçün icazəniz yoxdur");
@@ -299,6 +323,13 @@ public class OrderService {
 
 		if (order.getStatus() != OrderStatus.SHIPPED) {
 			throw new MyException("Yalnız SHIPPED statusundakı sifariş çatdırıla bilər");
+		}
+
+		if (isPreparer) {
+			if (currentUser.getMarket() == null || order.getMarket() == null
+					|| !order.getMarket().getId().equals(currentUser.getMarket().getId())) {
+				throw new MyException("Bu sifariş sizin marketə aid deyil.");
+			}
 		}
 
 		order.setStatus(OrderStatus.DELIVERED);
@@ -327,7 +358,15 @@ public class OrderService {
 
 		order.setStatus(OrderStatus.CANCELLED);
 
+
 		repository.save(order);
+		OrderDTO dto = convertToDTO(order);
+		List<OrderItemDTO> items = dto.getItems();
+		for (OrderItemDTO d : items) {
+			Product product = productService.findProduct(d.getProductId());
+			product.setStockQuantity(product.getStockQuantity() + d.getQuantity());
+			productService.savePro(product);
+		}
 
 		return convertToDTO(order);
 	}
